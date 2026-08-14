@@ -1,1 +1,3 @@
-<resources><string name="app_name">محاسبه پایان خدمت</string></resources>
+<resources>
+    <string name="app_name">پایان خدمت</string>
+</resources>
