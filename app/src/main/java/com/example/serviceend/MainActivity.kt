@@ -84,7 +84,7 @@ class MainActivity : Activity() {
         header.addView(title)
 
         val subtitle = TextView(this)
-        subtitle.text = "برای تمام سربازانی که روزهای خدمت را می‌شمارند —   م. سریوه"
+        subtitle.text = "برای تمام سربازانی که روزهای خدمت را می‌شمارند —\nم. سریوه"
         subtitle.textSize = 14f
         subtitle.setTextColor(Color.WHITE)
         subtitle.gravity = Gravity.CENTER
