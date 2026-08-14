@@ -74,7 +74,7 @@ class MainActivity : Activity() {
         header.addView(icon)
 
         val title = TextView(this)
-        title.text = "نوشته شده توسط م سریوه"
+        title.text = "محاسبه گر پایان خدمت"
         title.textSize = 25f
         title.setTextColor(Color.WHITE)
         title.gravity = Gravity.CENTER
@@ -84,7 +84,7 @@ class MainActivity : Activity() {
         header.addView(title)
 
         val subtitle = TextView(this)
-        subtitle.text = "محاسبه دقیق مدت خدمت و تاریخ پایان"
+        subtitle.text = "برای تمام سربازانی که روزهای خدمت را می‌شمارند — م. سریوه"
         subtitle.textSize = 14f
         subtitle.setTextColor(Color.WHITE)
         subtitle.gravity = Gravity.CENTER
