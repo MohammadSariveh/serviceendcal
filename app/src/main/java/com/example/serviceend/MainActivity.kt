@@ -74,7 +74,7 @@ class MainActivity : Activity() {
         header.addView(icon)
 
         val title = TextView(this)
-        title.text = "محاسبه‌گر پایان خدمت"
+        title.text = "نوشته شده توسط م سریوه"
         title.textSize = 25f
         title.setTextColor(Color.WHITE)
         title.gravity = Gravity.CENTER
@@ -817,7 +817,7 @@ class MainActivity : Activity() {
         val finishText = TextView(this)
 
         finishText.text =
-            formatJalali(finishDate)
+            formatJalali(addDays(finishDate, -5))
 
         finishText.textSize = 27f
         finishText.setTextColor(Color.WHITE)
