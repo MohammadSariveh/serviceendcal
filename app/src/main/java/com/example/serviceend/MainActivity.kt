@@ -13,6 +13,7 @@ import android.widget.TextView
 import android.widget.Toast
 import java.util.Calendar
 import java.util.Locale
+import kotlin.math.floor
 
 class MainActivity : Activity() {
 
@@ -41,24 +42,30 @@ class MainActivity : Activity() {
 
         scrollView.addView(root)
 
+        // عنوان
         val title = TextView(this)
         title.text = "محاسبه‌گر پایان خدمت"
         title.textSize = 27f
         title.gravity = Gravity.CENTER
         title.setPadding(0, 0, 0, 12)
+
         root.addView(title)
 
+        // مدت پایه
         val subtitle = TextView(this)
         subtitle.text = "مدت پایه خدمت: ۲۱ ماه"
         subtitle.textSize = 17f
         subtitle.gravity = Gravity.CENTER
         subtitle.setPadding(0, 0, 0, 20)
+
         root.addView(subtitle)
 
+        // نوع خدمت
         val typeTitle = TextView(this)
         typeTitle.text = "نوع خدمت را انتخاب کنید:"
         typeTitle.textSize = 18f
         typeTitle.gravity = Gravity.RIGHT
+
         root.addView(typeTitle)
 
         val typeLayout = LinearLayout(this)
@@ -91,6 +98,7 @@ class MainActivity : Activity() {
         updateTypeButtons()
 
         localButton.setOnClickListener {
+
             deductionDaysPerMonth = 5
             updateTypeButtons()
 
@@ -102,6 +110,7 @@ class MainActivity : Activity() {
         }
 
         nonLocalButton.setOnClickListener {
+
             deductionDaysPerMonth = 12
             updateTypeButtons()
 
@@ -118,13 +127,16 @@ class MainActivity : Activity() {
         dateTitle.textSize = 18f
         dateTitle.gravity = Gravity.RIGHT
         dateTitle.setPadding(0, 10, 0, 8)
+
         root.addView(dateTitle)
 
         startDateInput = EditText(this)
         startDateInput.hint = "مثلاً ۱۴۰۵/۰۵/۲۳"
         startDateInput.textSize = 17f
         startDateInput.gravity = Gravity.CENTER
-        startDateInput.inputType = InputType.TYPE_CLASS_TEXT
+
+        startDateInput.inputType =
+            InputType.TYPE_CLASS_TEXT
 
         root.addView(
             startDateInput,
@@ -140,32 +152,41 @@ class MainActivity : Activity() {
         extraTitle.textSize = 18f
         extraTitle.gravity = Gravity.RIGHT
         extraTitle.setPadding(0, 20, 0, 8)
+
         root.addView(extraTitle)
 
         val extraHint = TextView(this)
         extraHint.text =
             "مثال: ۵ ماه و ۱۲ روز  یا  ۵/۱۲  یا  ۱۲ روز"
+
         extraHint.textSize = 13f
         extraHint.gravity = Gravity.RIGHT
+
         root.addView(extraHint)
 
         extraDeductionInput = EditText(this)
-        extraDeductionInput.hint = "مثلاً ۵ ماه و ۱۲ روز"
-        extraDeductionInput.inputType = InputType.TYPE_CLASS_TEXT
+
+        extraDeductionInput.hint =
+            "مثلاً ۵ ماه و ۱۲ روز"
+
+        extraDeductionInput.inputType =
+            InputType.TYPE_CLASS_TEXT
 
         root.addView(extraDeductionInput)
 
         // دکمه محاسبه
         val calculateButton = Button(this)
+
         calculateButton.text = "محاسبه پایان خدمت"
         calculateButton.textSize = 18f
         calculateButton.isAllCaps = false
         calculateButton.setPadding(0, 20, 0, 20)
 
-        val calculateParams = LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT
-        )
+        val calculateParams =
+            LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
 
         calculateParams.setMargins(0, 25, 0, 20)
 
@@ -180,6 +201,7 @@ class MainActivity : Activity() {
 
         // نتیجه
         resultText = TextView(this)
+
         resultText.textSize = 16f
         resultText.gravity = Gravity.RIGHT
         resultText.setPadding(0, 25, 0, 40)
@@ -221,16 +243,12 @@ class MainActivity : Activity() {
         }
     }
 
-    // =====================================================
-    // محاسبه اصلی
-    // =====================================================
-
     private fun calculateService() {
 
-        val startText =
+        val startDateText =
             startDateInput.text.toString().trim()
 
-        if (startText.isEmpty()) {
+        if (startDateText.isEmpty()) {
 
             Toast.makeText(
                 this,
@@ -242,7 +260,7 @@ class MainActivity : Activity() {
         }
 
         val start =
-            parseJalaliDate(startText)
+            parseJalaliDate(startDateText)
 
         if (start == null) {
 
@@ -255,14 +273,17 @@ class MainActivity : Activity() {
             return
         }
 
+        // -----------------------------
         // کسری اضافه
+        // -----------------------------
+
         val extraText =
             extraDeductionInput.text.toString().trim()
 
-        val extra =
+        val extraDuration =
             parseExtraDeduction(extraText)
 
-        if (extra == null) {
+        if (extraDuration == null) {
 
             Toast.makeText(
                 this,
@@ -273,13 +294,29 @@ class MainActivity : Activity() {
             return
         }
 
-        val extraMonths = extra.first
-        val extraDays = extra.second
+        val extraMonths =
+            extraDuration.first
 
-        // -------------------------------------------------
-        // پایان پایه:
-        // دقیقاً ۲۱ ماه تقویمی بعد از شروع
-        // -------------------------------------------------
+        val extraDays =
+            extraDuration.second
+
+        // تبدیل کسری اضافه به تعداد روزهای واقعی
+        val extraEnd =
+            addJalaliMonthsAndDays(
+                start,
+                extraMonths,
+                extraDays
+            )
+
+        val extraDeductionDays =
+            daysBetween(
+                start,
+                extraEnd
+            )
+
+        // -----------------------------
+        // پایان خدمت بدون کسری
+        // -----------------------------
 
         val baseFinish =
             addJalaliMonthsAndDays(
@@ -288,93 +325,78 @@ class MainActivity : Activity() {
                 0
             )
 
-        // -------------------------------------------------
-        // ابتدا کسری اضافه را اعمال می‌کنیم
-        // -------------------------------------------------
-
-        var finish =
-            subtractJalaliMonthsAndDays(
-                baseFinish,
-                extraMonths,
-                extraDays
-            )
-
-        // -------------------------------------------------
-        // کسری ماهانه
-        //
-        // تعداد ماه‌ها = تعداد ماه‌های تقویمی گذشته
-        // هر ماه فقط یک واحد محسوب می‌شود.
-        //
-        // مثال:
-        // ۱۰ ماه × ۵ روز = ۵۰ روز
-        // -------------------------------------------------
-
-        var previousFinish: Calendar? = null
-
-        repeat(100) {
-
-            val monthsServed =
-                completedCalendarMonths(
-                    start,
-                    finish
-                )
-
-            val monthlyDeduction =
-                monthsServed *
-                        deductionDaysPerMonth
-
-            val newFinish =
-                subtractDays(
-                    finish,
-                    monthlyDeduction
-                )
-
-            if (
-                previousFinish != null &&
-                        newFinish.timeInMillis ==
-                        previousFinish!!.timeInMillis
-            ) {
-                finish = newFinish
-                return@repeat
-            }
-
-            previousFinish =
-                finish.clone() as Calendar
-
-            finish =
-                newFinish
-        }
-
-        // تعداد ماه‌های واقعی خدمت
-        val actualMonths =
-            completedCalendarMonths(
-                start,
-                finish
-            )
-
-        val monthlyDeduction =
-            actualMonths *
-                    deductionDaysPerMonth
-
-        val totalExtraDays =
+        val baseServiceDays =
             daysBetween(
-                subtractJalaliMonthsAndDays(
-                    baseFinish,
-                    extraMonths,
-                    extraDays
-                ),
+                start,
                 baseFinish
             )
 
-        val totalDeduction =
-            monthlyDeduction +
-                    totalExtraDays
+        // -----------------------------
+        // پیدا کردن مدت واقعی خدمت
+        //
+        // کسری ماهانه بر اساس ماه‌های
+        // واقعی تقویمی محاسبه می‌شود.
+        // -----------------------------
 
-        val actualCalendarDays =
-            daysBetween(
-                start,
-                finish
+        var actualServiceDays = 0
+
+        var testDate =
+            start.clone() as Calendar
+
+        while (actualServiceDays < baseServiceDays) {
+
+            val nextDate =
+                testDate.clone() as Calendar
+
+            nextDate.add(
+                Calendar.DAY_OF_MONTH,
+                1
             )
+
+            val serviceDays =
+                daysBetween(
+                    start,
+                    nextDate
+                )
+
+            val monthlyDeduction =
+                calculateMonthlyDeduction(
+                    start,
+                    nextDate
+                )
+
+            val totalUsed =
+                serviceDays +
+                        monthlyDeduction +
+                        extraDeductionDays
+
+            if (totalUsed >= baseServiceDays) {
+                break
+            }
+
+            actualServiceDays++
+
+            testDate =
+                nextDate
+        }
+
+        // تاریخ پایان
+        val finishDate =
+            addDays(
+                start,
+                actualServiceDays
+            )
+
+        // کسری ماهانه
+        val serviceDeductionDays =
+            calculateMonthlyDeduction(
+                start,
+                finishDate
+            )
+
+        val totalDeductionDays =
+            serviceDeductionDays +
+                    extraDeductionDays
 
         val serviceType =
             if (deductionDaysPerMonth == 5) {
@@ -383,9 +405,9 @@ class MainActivity : Activity() {
                 "غیربومی"
             }
 
-        // =================================================
+        // -----------------------------
         // نتیجه
-        // =================================================
+        // -----------------------------
 
         val result =
             StringBuilder()
@@ -421,7 +443,7 @@ class MainActivity : Activity() {
         )
 
         result.append(
-            " روز به ازای هر ماه\n\n"
+            " روز\n\n"
         )
 
         result.append(
@@ -443,33 +465,29 @@ class MainActivity : Activity() {
         )
 
         result.append(
+            "از "
+        )
+
+        result.append(
             formatJalali(start)
         )
 
         result.append(
-            " ← "
+            " تا "
         )
 
         result.append(
             formatJalali(baseFinish)
         )
 
-        result.append("\n\n")
+        result.append("\n")
 
         result.append(
-            "کسری اضافه:\n"
+            "تعداد روز واقعی: "
         )
 
         result.append(
-            extraMonths
-        )
-
-        result.append(
-            " ماه و "
-        )
-
-        result.append(
-            extraDays
+            formatNumber(baseServiceDays.toDouble())
         )
 
         result.append(
@@ -477,39 +495,59 @@ class MainActivity : Activity() {
         )
 
         result.append(
-            "تعداد ماه‌های خدمت:\n"
+            "کسری اضافه:\n"
         )
 
         result.append(
-            actualMonths
+            formatNumber(extraMonths.toDouble())
         )
 
         result.append(
-            " ماه\n\n"
+            " ماه و "
         )
 
         result.append(
-            "کسری ماهانه:\n"
+            formatNumber(extraDays.toDouble())
         )
 
         result.append(
-            actualMonths
+            " روز\n"
         )
 
         result.append(
-            " × "
+            "معادل "
         )
 
         result.append(
-            deductionDaysPerMonth
+            formatNumber(extraDeductionDays.toDouble())
         )
 
         result.append(
-            " = "
+            " روز تقویمی\n\n"
         )
 
         result.append(
-            monthlyDeduction
+            "مدت خدمت واقعی:\n"
+        )
+
+        result.append(
+            formatNumber(
+                actualServiceDays.toDouble()
+            )
+        )
+
+        result.append(
+            " روز\n\n"
+        )
+
+        result.append(
+            "کسری ناشی از نوع خدمت:\n"
+        )
+
+        result.append(
+            formatNumber(
+                serviceDeductionDays
+            )
         )
 
         result.append(
@@ -521,19 +559,9 @@ class MainActivity : Activity() {
         )
 
         result.append(
-            totalDeduction
-        )
-
-        result.append(
-            " روز\n\n"
-        )
-
-        result.append(
-            "مدت حضور واقعی در تقویم:\n"
-        )
-
-        result.append(
-            actualCalendarDays
+            formatNumber(
+                totalDeductionDays
+            )
         )
 
         result.append(
@@ -549,7 +577,7 @@ class MainActivity : Activity() {
         )
 
         result.append(
-            formatJalali(finish)
+            formatJalali(finishDate)
         )
 
         result.append("\n")
@@ -559,24 +587,17 @@ class MainActivity : Activity() {
         )
 
         result.append(
-            "مبنای محاسبه: ماه‌ها به صورت ماه "
+            "مبنای محاسبه: تقویم واقعی شمسی؛ "
         )
 
         result.append(
-            "تقویمی شمسی محاسبه می‌شوند؛ "
-        )
-
-        result.append(
-            "هر ماه صرف‌نظر از تعداد روزهای آن، "
-        )
-
-        result.append(
-            "یک ماه کامل محسوب می‌شود."
+            "ماه‌های ۳۱ روزه و سال کبیسه لحاظ شده‌اند."
         )
 
         resultText.text =
             result.toString()
 
+        // رفتن خودکار به نتیجه
         resultText.post {
 
             val scrollView =
@@ -593,275 +614,70 @@ class MainActivity : Activity() {
     }
 
     // =====================================================
-    // تعداد ماه‌های کامل تقویمی بین دو تاریخ
+    // محاسبه کسری ماهانه بر اساس ماه‌های واقعی تقویمی
     // =====================================================
 
-    private fun completedCalendarMonths(
+    private fun calculateMonthlyDeduction(
         start: Calendar,
         end: Calendar
-    ): Int {
+    ): Double {
 
         if (!end.after(start)) {
-            return 0
+            return 0.0
         }
 
-        val s =
-            gregorianToJalali(
-                start.get(Calendar.YEAR),
-                start.get(Calendar.MONTH) + 1,
-                start.get(Calendar.DAY_OF_MONTH)
+        var current =
+            start.clone() as Calendar
+
+        var totalDeduction = 0.0
+
+        while (true) {
+
+            val nextMonth =
+                current.clone() as Calendar
+
+            nextMonth.add(
+                Calendar.MONTH,
+                1
             )
 
-        val e =
-            gregorianToJalali(
-                end.get(Calendar.YEAR),
-                end.get(Calendar.MONTH) + 1,
-                end.get(Calendar.DAY_OF_MONTH)
-            )
+            if (nextMonth.after(end)) {
 
-        var months =
-            (e[0] - s[0]) * 12 +
-                    (e[1] - s[1])
+                val remainingDays =
+                    daysBetween(
+                        current,
+                        end
+                    )
 
-        if (e[2] < s[2]) {
-            months--
+                val monthDays =
+                    daysBetween(
+                        current,
+                        nextMonth
+                    )
+
+                if (monthDays > 0) {
+
+                    totalDeduction +=
+                        deductionDaysPerMonth *
+                                remainingDays.toDouble() /
+                                monthDays.toDouble()
+                }
+
+                break
+            }
+
+            totalDeduction +=
+                deductionDaysPerMonth.toDouble()
+
+            current =
+                nextMonth
         }
 
-        if (months < 0) {
-            return 0
-        }
-
-        return months
+        return totalDeduction
     }
 
     // =====================================================
-    // اضافه کردن ماه و روز شمسی
-    // =====================================================
-
-    private fun addJalaliMonthsAndDays(
-        source: Calendar,
-        months: Int,
-        days: Int
-    ): Calendar {
-
-        val j =
-            gregorianToJalali(
-                source.get(Calendar.YEAR),
-                source.get(Calendar.MONTH) + 1,
-                source.get(Calendar.DAY_OF_MONTH)
-            )
-
-        var jy = j[0]
-        var jm = j[1]
-        var jd = j[2]
-
-        var totalMonths =
-            jy * 12 +
-                    (jm - 1) +
-                    months
-
-        jy =
-            totalMonths / 12
-
-        jm =
-            totalMonths % 12 + 1
-
-        val maxDay =
-            jalaliMonthLength(
-                jy,
-                jm
-            )
-
-        if (jd > maxDay) {
-            jd = maxDay
-        }
-
-        val result =
-            jalaliToGregorian(
-                jy,
-                jm,
-                jd
-            )
-
-        return addDays(
-            result,
-            days
-        )
-    }
-
-    // =====================================================
-    // کم کردن ماه و روز شمسی
-    // =====================================================
-
-    private fun subtractJalaliMonthsAndDays(
-        source: Calendar,
-        months: Int,
-        days: Int
-    ): Calendar {
-
-        val j =
-            gregorianToJalali(
-                source.get(Calendar.YEAR),
-                source.get(Calendar.MONTH) + 1,
-                source.get(Calendar.DAY_OF_MONTH)
-            )
-
-        var jy = j[0]
-        var jm = j[1]
-        var jd = j[2]
-
-        var totalMonths =
-            jy * 12 +
-                    (jm - 1) -
-                    months
-
-        jy =
-            totalMonths / 12
-
-        jm =
-            totalMonths % 12 + 1
-
-        if (jm <= 0) {
-            jy--
-            jm += 12
-        }
-
-        val maxDay =
-            jalaliMonthLength(
-                jy,
-                jm
-            )
-
-        if (jd > maxDay) {
-            jd = maxDay
-        }
-
-        val result =
-            jalaliToGregorian(
-                jy,
-                jm,
-                jd
-            )
-
-        return subtractDays(
-            result,
-            days
-        )
-    }
-
-    // =====================================================
-    // طول ماه شمسی
-    // =====================================================
-
-    private fun jalaliMonthLength(
-        year: Int,
-        month: Int
-    ): Int {
-
-        return when {
-
-            month in 1..6 ->
-                31
-
-            month in 7..11 ->
-                30
-
-            isJalaliLeap(year) ->
-                30
-
-            else ->
-                29
-        }
-    }
-
-    // =====================================================
-    // کبیسه شمسی
-    // =====================================================
-
-    private fun isJalaliLeap(
-        year: Int
-    ): Boolean {
-
-        val mod =
-            year % 33
-
-        return mod == 1 ||
-                mod == 5 ||
-                mod == 9 ||
-                mod == 13 ||
-                mod == 17 ||
-                mod == 22 ||
-                mod == 26 ||
-                mod == 30
-    }
-
-    // =====================================================
-    // اضافه کردن روز
-    // =====================================================
-
-    private fun addDays(
-        source: Calendar,
-        days: Int
-    ): Calendar {
-
-        val result =
-            Calendar.getInstance()
-
-        result.timeInMillis =
-            source.timeInMillis
-
-        result.add(
-            Calendar.DAY_OF_MONTH,
-            days
-        )
-
-        return result
-    }
-
-    // =====================================================
-    // کم کردن روز
-    // =====================================================
-
-    private fun subtractDays(
-        source: Calendar,
-        days: Int
-    ): Calendar {
-
-        val result =
-            Calendar.getInstance()
-
-        result.timeInMillis =
-            source.timeInMillis
-
-        result.add(
-            Calendar.DAY_OF_MONTH,
-            -days
-        )
-
-        return result
-    }
-
-    // =====================================================
-    // اختلاف روز
-    // =====================================================
-
-    private fun daysBetween(
-        start: Calendar,
-        end: Calendar
-    ): Int {
-
-        val diff =
-            end.timeInMillis -
-                    start.timeInMillis
-
-        return (
-            diff /
-                    (24L * 60L * 60L * 1000L)
-            ).toInt()
-    }
-
-    // =====================================================
-    // تبدیل کسری اضافه
+    // تبدیل "۵ ماه و ۱۲ روز" / "۵/۱۲" و ...
     // =====================================================
 
     private fun parseExtraDeduction(
@@ -888,7 +704,7 @@ class MainActivity : Activity() {
                     .replace('۹', '9')
                     .trim()
 
-            // 5/12
+            // حالت 5/12
             if (text.contains("/")) {
 
                 val parts =
@@ -897,14 +713,10 @@ class MainActivity : Activity() {
                 if (parts.size == 2) {
 
                     val months =
-                        parts[0]
-                            .trim()
-                            .toIntOrNull()
+                        parts[0].trim().toIntOrNull()
 
                     val days =
-                        parts[1]
-                            .trim()
-                            .toIntOrNull()
+                        parts[1].trim().toIntOrNull()
 
                     if (
                         months != null &&
@@ -913,7 +725,6 @@ class MainActivity : Activity() {
                         days >= 0 &&
                         days < 31
                     ) {
-
                         return Pair(
                             months,
                             days
@@ -922,14 +733,24 @@ class MainActivity : Activity() {
                 }
             }
 
+            // حذف حروف اضافی
             text =
-                text.replace("ماه", " ")
+                text.replace(
+                    "ماه",
+                    " "
+                )
 
             text =
-                text.replace("روز", " ")
+                text.replace(
+                    "روز",
+                    " "
+                )
 
             text =
-                text.replace("و", " ")
+                text.replace(
+                    "و",
+                    " "
+                )
 
             val numbers =
                 Regex("\\d+")
@@ -977,7 +798,143 @@ class MainActivity : Activity() {
     }
 
     // =====================================================
-    // تبدیل شمسی به میلادی
+    // افزودن ماه و روز تقویمی شمسی
+    // =====================================================
+
+    private fun addJalaliMonthsAndDays(
+        source: Calendar,
+        months: Int,
+        days: Int
+    ): Calendar {
+
+        val jalali =
+            gregorianToJalali(
+                source.get(Calendar.YEAR),
+                source.get(Calendar.MONTH) + 1,
+                source.get(Calendar.DAY_OF_MONTH)
+            )
+
+        var jy = jalali[0]
+        var jm = jalali[1]
+        var jd = jalali[2]
+
+        var totalMonths =
+            jy * 12 + (jm - 1) + months
+
+        jy =
+            totalMonths / 12
+
+        jm =
+            totalMonths % 12 + 1
+
+        val maxDay =
+            jalaliMonthLength(
+                jy,
+                jm
+            )
+
+        if (jd > maxDay) {
+            jd = maxDay
+        }
+
+        var result =
+            jalaliToGregorian(
+                jy,
+                jm,
+                jd
+            )
+
+        result =
+            addDays(
+                result,
+                days
+            )
+
+        return result
+    }
+
+    private fun jalaliMonthLength(
+        year: Int,
+        month: Int
+    ): Int {
+
+        return when {
+
+            month <= 6 -> 31
+
+            month <= 11 -> 30
+
+            isJalaliLeap(year) -> 30
+
+            else -> 29
+        }
+    }
+
+    // =====================================================
+    // سال کبیسه شمسی
+    // =====================================================
+
+    private fun isJalaliLeap(
+        year: Int
+    ): Boolean {
+
+        val mod =
+            year % 33
+
+        return mod == 1 ||
+                mod == 5 ||
+                mod == 9 ||
+                mod == 13 ||
+                mod == 17 ||
+                mod == 22 ||
+                mod == 26 ||
+                mod == 30
+    }
+
+    // =====================================================
+    // تعداد روز بین دو تاریخ
+    // =====================================================
+
+    private fun daysBetween(
+        start: Calendar,
+        end: Calendar
+    ): Int {
+
+        val diff =
+            end.timeInMillis -
+                    start.timeInMillis
+
+        return floor(
+            diff.toDouble() /
+                    (24.0 * 60.0 * 60.0 * 1000.0)
+        ).toInt()
+    }
+
+    // =====================================================
+    // اضافه کردن روز
+    // =====================================================
+
+    private fun addDays(
+        source: Calendar,
+        days: Int
+    ): Calendar {
+
+        val result =
+            Calendar.getInstance()
+
+        result.timeInMillis =
+            source.timeInMillis
+
+        result.add(
+            Calendar.DAY_OF_MONTH,
+            days
+        )
+
+        return result
+    }
+
+    // =====================================================
+    // تبدیل تاریخ شمسی به میلادی
     // =====================================================
 
     private fun jalaliToGregorian(
@@ -999,8 +956,11 @@ class MainActivity : Activity() {
         while (i < jm - 1) {
 
             jDayNo +=
-                if (i < 6) 31
-                else 30
+                if (i < 6) {
+                    31
+                } else {
+                    30
+                }
 
             i++
         }
@@ -1059,6 +1019,8 @@ class MainActivity : Activity() {
                 365
         }
 
+        var gm = 0
+
         val gDays =
             intArrayOf(
                 31,
@@ -1074,8 +1036,6 @@ class MainActivity : Activity() {
                 30,
                 31
             )
-
-        var gm = 0
 
         var gd =
             gDayNo + 1
@@ -1224,7 +1184,7 @@ class MainActivity : Activity() {
     }
 
     // =====================================================
-    // اعتبارسنجی تاریخ
+    // اعتبارسنجی تاریخ شمسی
     // =====================================================
 
     private fun parseJalaliDate(
@@ -1316,18 +1276,33 @@ class MainActivity : Activity() {
     }
 
     // =====================================================
-    // فرمت تاریخ
+    // فرمت تاریخ شمسی
     // =====================================================
 
     private fun formatJalali(
         calendar: Calendar
     ): String {
 
+        val gy =
+            calendar.get(
+                Calendar.YEAR
+            )
+
+        val gm =
+            calendar.get(
+                Calendar.MONTH
+            ) + 1
+
+        val gd =
+            calendar.get(
+                Calendar.DAY_OF_MONTH
+            )
+
         val result =
             gregorianToJalali(
-                calendar.get(Calendar.YEAR),
-                calendar.get(Calendar.MONTH) + 1,
-                calendar.get(Calendar.DAY_OF_MONTH)
+                gy,
+                gm,
+                gd
             )
 
         val year =
@@ -1336,17 +1311,27 @@ class MainActivity : Activity() {
         val month =
             result[1]
                 .toString()
-                .padStart(2, '0')
+                .padStart(
+                    2,
+                    '0'
+                )
 
         val day =
             result[2]
                 .toString()
-                .padStart(2, '0')
+                .padStart(
+                    2,
+                    '0'
+                )
 
         return toPersianDigits(
             "$year/$month/$day"
         )
     }
+
+    // =====================================================
+    // اعداد فارسی
+    // =====================================================
 
     private fun toPersianDigits(
         value: String
@@ -1358,18 +1343,25 @@ class MainActivity : Activity() {
         val persian =
             "۰۱۲۳۴۵۶۷۸۹"
 
-        return value.map { c ->
+        return value.map { character ->
 
             val index =
-                english.indexOf(c)
+                english.indexOf(
+                    character
+                )
 
-            if (index >= 0)
+            if (index >= 0) {
                 persian[index]
-            else
-                c
+            } else {
+                character
+            }
 
         }.joinToString("")
     }
+
+    // =====================================================
+    // کبیسه میلادی
+    // =====================================================
 
     private fun isGregorianLeap(
         year: Int
