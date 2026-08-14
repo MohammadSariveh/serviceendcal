@@ -1,16 +1,2 @@
-# محاسبه‌گر پایان خدمت
-
-اپ اندرویدی فارسی برای محاسبه تاریخ پایان خدمت بر اساس قاعده کاربر:
-- خدمت پایه: ۲۱ ماه
-- هر ماه خدمت واقعی: ۵ روز کسری
-- کسری‌های اضافی به ماه و روز
-- ورودی و خروجی تاریخ شمسی
-
-## ساخت APK
-پروژه را در Android Studio باز کنید و از:
-Build > Build APK(s)
-استفاده کنید.
-
-APK معمولاً در:
-app/build/outputs/apk/debug/app-debug.apk
-ساخته می‌شود.
+# Service End Calculator
+Android app for Persian service-end calculation.
