@@ -437,7 +437,7 @@ class MainActivity : Activity() {
             " روز"
         )
 
-        resultTextView.text =
+        resultText.text =
             result.toString()
     }
 
