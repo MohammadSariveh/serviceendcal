@@ -28,7 +28,6 @@ class MainActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         createUserInterface()
     }
 
@@ -37,7 +36,6 @@ class MainActivity : Activity() {
         val scrollView = ScrollView(this)
 
         val root = LinearLayout(this)
-
         root.orientation = LinearLayout.VERTICAL
         root.gravity = Gravity.CENTER_HORIZONTAL
         root.setPadding(32, 40, 32, 60)
@@ -46,7 +44,6 @@ class MainActivity : Activity() {
 
         // عنوان
         val title = TextView(this)
-
         title.text = "محاسبه‌گر پایان خدمت"
         title.textSize = 27f
         title.gravity = Gravity.CENTER
@@ -56,7 +53,6 @@ class MainActivity : Activity() {
 
         // مدت پایه
         val subtitle = TextView(this)
-
         subtitle.text = "مدت پایه خدمت: ۲۱ ماه"
         subtitle.textSize = 17f
         subtitle.gravity = Gravity.CENTER
@@ -66,7 +62,6 @@ class MainActivity : Activity() {
 
         // نوع خدمت
         val typeTitle = TextView(this)
-
         typeTitle.text = "نوع خدمت را انتخاب کنید:"
         typeTitle.textSize = 18f
         typeTitle.gravity = Gravity.RIGHT
@@ -74,19 +69,16 @@ class MainActivity : Activity() {
         root.addView(typeTitle)
 
         val typeLayout = LinearLayout(this)
-
         typeLayout.orientation = LinearLayout.HORIZONTAL
         typeLayout.gravity = Gravity.CENTER
         typeLayout.setPadding(0, 10, 0, 20)
 
         localButton = Button(this)
-
         localButton.text = "بومی\n۵ روز"
         localButton.textSize = 16f
         localButton.isAllCaps = false
 
         nonLocalButton = Button(this)
-
         nonLocalButton.text = "غیربومی\n۱۲ روز"
         nonLocalButton.textSize = 16f
         nonLocalButton.isAllCaps = false
@@ -108,7 +100,6 @@ class MainActivity : Activity() {
         localButton.setOnClickListener {
 
             deductionDaysPerMonth = 5
-
             updateTypeButtons()
 
             Toast.makeText(
@@ -121,7 +112,6 @@ class MainActivity : Activity() {
         nonLocalButton.setOnClickListener {
 
             deductionDaysPerMonth = 12
-
             updateTypeButtons()
 
             Toast.makeText(
@@ -141,12 +131,17 @@ class MainActivity : Activity() {
 
         root.addView(dateTitle)
 
+        // ورودی تاریخ
         startDateInput = EditText(this)
 
         startDateInput.hint = "مثلاً ۱۴۰۵/۰۵/۲۳"
         startDateInput.textSize = 17f
         startDateInput.gravity = Gravity.CENTER
-        startDateInput.inputType = InputType.TYPE_CLASS_NUMBER
+
+        // عدد + امکان ورود /
+        startDateInput.inputType =
+            InputType.TYPE_CLASS_NUMBER or
+                    InputType.TYPE_NUMBER_FLAG_DECIMAL
 
         root.addView(
             startDateInput,
@@ -156,13 +151,45 @@ class MainActivity : Activity() {
             )
         )
 
+        // دکمه امروز
+        val todayButton = Button(this)
+
+        todayButton.text = "تاریخ امروز"
+        todayButton.textSize = 16f
+        todayButton.isAllCaps = false
+
+        val todayParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+
+        todayParams.setMargins(0, 8, 0, 20)
+
+        root.addView(
+            todayButton,
+            todayParams
+        )
+
+        todayButton.setOnClickListener {
+
+            val today = Calendar.getInstance()
+
+            startDateInput.setText(
+                formatJalali(today)
+            )
+
+            startDateInput.setSelection(
+                startDateInput.text.length
+            )
+        }
+
         // کسری اضافه
         val extraTitle = TextView(this)
 
         extraTitle.text = "کسری‌های اضافه:"
         extraTitle.textSize = 18f
         extraTitle.gravity = Gravity.RIGHT
-        extraTitle.setPadding(0, 20, 0, 8)
+        extraTitle.setPadding(0, 10, 0, 8)
 
         root.addView(extraTitle)
 
@@ -179,6 +206,7 @@ class MainActivity : Activity() {
         extraDeductionInput = EditText(this)
 
         extraDeductionInput.hint = "تعداد ماه کسری اضافه"
+
         extraDeductionInput.inputType =
             InputType.TYPE_CLASS_NUMBER or
                     InputType.TYPE_NUMBER_FLAG_DECIMAL
@@ -192,15 +220,24 @@ class MainActivity : Activity() {
         calculateButton.textSize = 18f
         calculateButton.isAllCaps = false
 
-        calculateButton.setPadding(0, 20, 0, 20)
+        calculateButton.setPadding(
+            0,
+            20,
+            0,
+            20
+        )
 
-        val calculateParams =
-            LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
+        val calculateParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT
+        )
 
-        calculateParams.setMargins(0, 25, 0, 20)
+        calculateParams.setMargins(
+            0,
+            25,
+            0,
+            20
+        )
 
         root.addView(
             calculateButton,
@@ -208,8 +245,7 @@ class MainActivity : Activity() {
         )
 
         calculateButton.setOnClickListener {
-
-            calculateService()
+            calculateService(scrollView)
         }
 
         // نتیجه
@@ -217,7 +253,13 @@ class MainActivity : Activity() {
 
         resultText.textSize = 16f
         resultText.gravity = Gravity.RIGHT
-        resultText.setPadding(0, 25, 0, 40)
+
+        resultText.setPadding(
+            0,
+            25,
+            0,
+            60
+        )
 
         root.addView(resultText)
 
@@ -232,13 +274,17 @@ class MainActivity : Activity() {
                 Color.rgb(76, 175, 80)
             )
 
-            localButton.setTextColor(Color.WHITE)
+            localButton.setTextColor(
+                Color.WHITE
+            )
 
             nonLocalButton.setBackgroundColor(
                 Color.LTGRAY
             )
 
-            nonLocalButton.setTextColor(Color.BLACK)
+            nonLocalButton.setTextColor(
+                Color.BLACK
+            )
 
         } else {
 
@@ -246,20 +292,28 @@ class MainActivity : Activity() {
                 Color.rgb(76, 175, 80)
             )
 
-            nonLocalButton.setTextColor(Color.WHITE)
+            nonLocalButton.setTextColor(
+                Color.WHITE
+            )
 
             localButton.setBackgroundColor(
                 Color.LTGRAY
             )
 
-            localButton.setTextColor(Color.BLACK)
+            localButton.setTextColor(
+                Color.BLACK
+            )
         }
     }
 
-    private fun calculateService() {
+    private fun calculateService(
+        scrollView: ScrollView
+    ) {
 
         val startDateText =
-            startDateInput.text.toString().trim()
+            startDateInput.text
+                .toString()
+                .trim()
 
         if (startDateText.isEmpty()) {
 
@@ -293,12 +347,20 @@ class MainActivity : Activity() {
 
         val extraMonths =
             if (extraMonthsText.isEmpty()) {
+
                 0.0
+
             } else {
-                extraMonthsText.toDoubleOrNull()
+
+                normalizeNumber(
+                    extraMonthsText
+                ).toDoubleOrNull()
             }
 
-        if (extraMonths == null || extraMonths < 0) {
+        if (
+            extraMonths == null ||
+            extraMonths < 0
+        ) {
 
             Toast.makeText(
                 this,
@@ -309,6 +371,20 @@ class MainActivity : Activity() {
             return
         }
 
+        /*
+         * مدت پایه = ۲۱ ماه
+         * هر ماه = ۳۰ روز
+         *
+         * بومی = ۵ روز کسری برای هر ماه
+         * غیربومی = ۱۲ روز کسری برای هر ماه
+         *
+         * اگر X ماه خدمت واقعی باشد:
+         *
+         * 30X + rateX + کسری اضافه = 630
+         *
+         * X = (630 - کسری اضافه) / (30 + rate)
+         */
+
         val baseServiceDays =
             21.0 * 30.0
 
@@ -318,7 +394,10 @@ class MainActivity : Activity() {
         val rate =
             deductionDaysPerMonth.toDouble()
 
-        if (extraDeductionDays > baseServiceDays) {
+        if (
+            extraDeductionDays >
+            baseServiceDays
+        ) {
 
             Toast.makeText(
                 this,
@@ -329,19 +408,14 @@ class MainActivity : Activity() {
             return
         }
 
-        /*
-         * 30X + rateX + کسری اضافه = 630
-         *
-         * X = (630 - کسری اضافه) / (30 + rate)
-         */
-
         val actualServiceMonths =
             (
-                baseServiceDays -
-                        extraDeductionDays
-                ) / (
-                30.0 + rate
-                )
+                    baseServiceDays -
+                            extraDeductionDays
+                    ) /
+                    (
+                            30.0 + rate
+                            )
 
         val actualServiceDays =
             actualServiceMonths * 30.0
@@ -568,77 +642,69 @@ class MainActivity : Activity() {
         resultText.text =
             result.toString()
 
-        // بعد از نمایش نتیجه، صفحه را به پایین می‌برد
-        resultText.post {
+        // رفتن خودکار به نتیجه
+        scrollView.post {
 
-            val scrollView =
-                resultText.parent.parent as? ScrollView
-
-            scrollView?.post {
-
-                scrollView.fullScroll(
-                    ScrollView.FOCUS_DOWN
-                )
-            }
+            scrollView.fullScroll(
+                ScrollView.FOCUS_DOWN
+            )
         }
     }
 
+    // تبدیل اعداد فارسی به انگلیسی
+    private fun normalizeNumber(
+        value: String
+    ): String {
+
+        return value
+            .replace('۰', '0')
+            .replace('۱', '1')
+            .replace('۲', '2')
+            .replace('۳', '3')
+            .replace('۴', '4')
+            .replace('۵', '5')
+            .replace('۶', '6')
+            .replace('۷', '7')
+            .replace('۸', '8')
+            .replace('۹', '9')
+            .replace(',', '.')
+    }
+
+    // خواندن تاریخ شمسی
     private fun parseJalaliDate(
         input: String
     ): Calendar? {
 
         try {
 
-            val normalized =
-                input
-                    .replace(
-                        '۰',
-                        '0'
-                    )
-                    .replace(
-                        '۱',
-                        '1'
-                    )
-                    .replace(
-                        '۲',
-                        '2'
-                    )
-                    .replace(
-                        '۳',
-                        '3'
-                    )
-                    .replace(
-                        '۴',
-                        '4'
-                    )
-                    .replace(
-                        '۵',
-                        '5'
-                    )
-                    .replace(
-                        '۶',
-                        '6'
-                    )
-                    .replace(
-                        '۷',
-                        '7'
-                    )
-                    .replace(
-                        '۸',
-                        '8'
-                    )
-                    .replace(
-                        '۹',
-                        '9'
-                    )
-                    .replace(
-                        '-',
-                        '/'
-                    )
-                    .replace(
-                        '.',
-                        '/'
-                    )
+            var normalized =
+                normalizeNumber(input.trim())
+
+            normalized =
+                normalized
+                    .replace('-', '/')
+                    .replace('.', '/')
+
+            // اگر کاربر 14050523 وارد کرد
+            if (
+                !normalized.contains("/") &&
+                normalized.length == 8
+            ) {
+
+                normalized =
+                    normalized.substring(
+                        0,
+                        4
+                    ) + "/" +
+                            normalized.substring(
+                                4,
+                                6
+                            ) + "/" +
+                            normalized.substring(
+                                6,
+                                8
+                            )
+            }
 
             val parts =
                 normalized.split("/")
@@ -656,7 +722,10 @@ class MainActivity : Activity() {
             val jd =
                 parts[2].toInt()
 
-            if (jy < 1300 || jy > 1500) {
+            if (
+                jy < 1300 ||
+                jy > 1500
+            ) {
                 return null
             }
 
@@ -689,6 +758,7 @@ class MainActivity : Activity() {
         }
     }
 
+    // تبدیل شمسی به میلادی
     private fun jalaliToGregorian(
         jy: Int,
         jm: Int,
@@ -698,141 +768,10 @@ class MainActivity : Activity() {
         var jyTemp =
             jy - 979
 
-        val jDayNo =
+        var jDayNo =
             365 * jyTemp +
                     (jyTemp / 33) * 8 +
                     ((jyTemp % 33) + 3) / 4
-
-        var dayNo =
-            jDayNo + 78
-
-        var gy =
-            1600 + 400 * (dayNo / 146097)
-
-        dayNo %= 146097
-
-        var leap = true
-
-        if (dayNo >= 36525) {
-
-            dayNo--
-
-            gy +=
-                100 * (dayNo / 36524)
-
-            dayNo %=
-                36524
-
-            if (dayNo >= 365) {
-                dayNo++
-            } else {
-                leap = false
-            }
-        }
-
-        gy +=
-            4 * (dayNo / 1461)
-
-        dayNo %=
-            1461
-
-        if (dayNo >= 366) {
-
-            leap = false
-
-            dayNo--
-
-            gy +=
-                dayNo / 365
-
-            dayNo %=
-                365
-        }
-
-        val gd =
-            dayNo + 1
-
-        val gDaysInMonth =
-            intArrayOf(
-                31,
-                if (leap) 29 else 28,
-                31,
-                30,
-                31,
-                30,
-                31,
-                31,
-                30,
-                31,
-                30,
-                31
-            )
-
-        var remaining =
-            gd
-
-        var gm = 0
-
-        while (
-            gm < 12 &&
-            remaining >
-            gDaysInMonth[gm]
-        ) {
-
-            remaining -=
-                gDaysInMonth[gm]
-
-            gm++
-        }
-
-        val baseCalendar =
-            Calendar.getInstance()
-
-        baseCalendar.clear()
-
-        baseCalendar.set(
-            gy,
-            gm,
-            remaining,
-            0,
-            0,
-            0
-        )
-
-        baseCalendar.set(
-            Calendar.MILLISECOND,
-            0
-        )
-
-        /*
-         * تبدیل بالا بر اساس روز شمار میلادی است.
-         * برای اطمینان از تاریخ شمسی، از تبدیل استاندارد
-         * روز شماره‌ای استفاده می‌کنیم.
-         */
-
-        val g =
-            jalaliToGregorianAccurate(
-                jy,
-                jm,
-                jd
-            )
-
-        return g
-    }
-
-    private fun jalaliToGregorianAccurate(
-        jy: Int,
-        jm: Int,
-        jd: Int
-    ): Calendar {
-
-        val jy2 =
-            jy - 979
-
-        var jDayNo =
-            365 * jy2 +
-                    (jy2 / 33) * 8 +
-                    ((jy2 % 33) + 3) / 4
 
         var i = 0
 
@@ -856,7 +795,8 @@ class MainActivity : Activity() {
 
         var gy =
             1600 +
-                    400 * (gDayNo / 146097)
+                    400 *
+                    (gDayNo / 146097)
 
         gDayNo %=
             146097
@@ -868,20 +808,25 @@ class MainActivity : Activity() {
             gDayNo--
 
             gy +=
-                100 * (gDayNo / 36524)
+                100 *
+                (gDayNo / 36524)
 
             gDayNo %=
                 36524
 
             if (gDayNo >= 365) {
+
                 gDayNo++
+
             } else {
+
                 leap = false
             }
         }
 
         gy +=
-            4 * (gDayNo / 1461)
+            4 *
+            (gDayNo / 1461)
 
         gDayNo %=
             1461
@@ -953,6 +898,7 @@ class MainActivity : Activity() {
         return calendar
     }
 
+    // اضافه کردن روز
     private fun addDays(
         source: Calendar,
         days: Int
@@ -994,6 +940,7 @@ class MainActivity : Activity() {
             )
     }
 
+    // تبدیل میلادی به شمسی
     private fun formatJalali(
         calendar: Calendar
     ): String {
@@ -1154,7 +1101,8 @@ class MainActivity : Activity() {
         var jy =
             979 +
                     33 * jNp +
-                    4 * (jDayNo / 1461)
+                    4 *
+                    (jDayNo / 1461)
 
         jDayNo %=
             1461
