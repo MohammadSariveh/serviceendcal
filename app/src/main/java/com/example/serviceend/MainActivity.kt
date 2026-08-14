@@ -121,7 +121,7 @@ class MainActivity : Activity() {
         val s=parse(start.text.toString())
         if(s==null){ result.text="❌ تاریخ را مثل ۱۴۰۴/۱۱/۰۱ وارد کن."; return }
         val em=extraMonths.text.toString().toDoubleOrNull()?:0.0
-        val ed=extraDays.text.toDoubleOrNull()?:0.0
+        val ed=extraDays.text.toString().toDoubleOrNull()?:0.0
         val extra=em+ed/30.0
         val actual=(21.0-extra)/(1.0+5.0/30.0)
         val months=kotlin.math.floor(actual).toInt()
