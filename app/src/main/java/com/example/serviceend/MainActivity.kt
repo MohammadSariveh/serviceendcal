@@ -488,11 +488,9 @@ class MainActivity : Activity() {
                 .trim()
 
         if (startDateText.isEmpty()) {
-
             showError(
                 "لطفاً تاریخ شروع خدمت را وارد کنید."
             )
-
             return
         }
 
@@ -500,11 +498,9 @@ class MainActivity : Activity() {
             parseJalaliDate(startDateText)
 
         if (start == null) {
-
             showError(
                 "تاریخ واردشده صحیح نیست.\nمثال: ۱۴۰۵/۰۵/۲۳"
             )
-
             return
         }
 
@@ -517,11 +513,9 @@ class MainActivity : Activity() {
             parseExtraDeduction(extraText)
 
         if (extraDuration == null) {
-
             showError(
                 "مقدار کسری صحیح نیست.\nمثال: ۵ ماه و ۱۲ روز"
             )
-
             return
         }
 
@@ -531,14 +525,21 @@ class MainActivity : Activity() {
         val extraDays =
             extraDuration.second
 
-        // کسریِ «ماه و روز» را به واحد ثابتِ روز تبدیل می‌کنیم.
-        // در محاسبات کسری خدمت، هر ماه کسری = ۳۰ روز در نظر گرفته می‌شود؛
-        // نباید طول واقعی ماه شمسی (۲۹/۳۰/۳۱ روز) باعث خطای چندروزه شود.
+        /*
+         * قانون ثابت تبدیل کسری اضافه:
+         * هر ماه کسری = ۳۰ روز.
+         */
         val extraDeductionDays =
             extraMonths * 30 + extraDays
 
-        // اگر روز شروع را روز اول خدمت بدانیم، پایان ۲۱ ماه
-        // آخرین روزِ بازه است؛ بنابراین یک روز از تاریخ +۲۱ ماه کم می‌کنیم.
+        /*
+         * ۲۱ ماه «سقف خدمت» است.
+         *
+         * چون روز شروع، روز اول خدمت محسوب می‌شود،
+         * آخرین روز خدمتِ ۲۱ ماهه برابر است با:
+         *
+         * start + 21 ماه - 1 روز
+         */
         val baseFinish =
             addDays(
                 addJalaliMonthsAndDays(
@@ -549,6 +550,13 @@ class MainActivity : Activity() {
                 -1
             )
 
+        /*
+         * تعداد فاصله‌های روزانه از روز شروع تا آخرین روز
+         * خدمت پایه.
+         *
+         * offset = 0  یعنی روز شروع
+         * offset = baseServiceDays یعنی آخرین روز مجاز
+         */
         val baseServiceDays =
             daysBetween(
                 start,
@@ -556,17 +564,39 @@ class MainActivity : Activity() {
             )
 
         /*
-         * به جای بررسی تک‌تک روزها با یک حلقه طولانی،
-         * از Binary Search استفاده می‌کنیم.
+         * کسری نمی‌تواند باعث شود مدت خدمت از ۲۱ ماه بیشتر شود.
+         *
+         * همچنین اگر کسری اضافه از کل خدمت بیشتر باشد،
+         * بیشتر از کل مدت پایه قابل اعمال نیست و پایان خدمت
+         * روی روز شروع متوقف می‌شود.
          */
+        val effectiveExtraDeductionDays =
+            extraDeductionDays.coerceAtMost(
+                baseServiceDays
+            )
 
+        /*
+         * Binary Search:
+         *
+         * کمترین offset را پیدا می‌کنیم که:
+         *
+         * روزهای سپری‌شده
+         * + کسری ماهانه
+         * + کسری اضافه
+         *
+         * به سقف ۲۱ ماه برسد.
+         *
+         * دامنه جستجو عمداً از ۰ تا baseServiceDays است؛
+         * بنابراین نتیجه تحت هیچ شرایطی نمی‌تواند از
+         * آخرین روز ۲۱ ماه عبور کند.
+         */
         var low = 0
         var high = baseServiceDays
 
         while (low < high) {
 
             val mid =
-                (low + high) / 2
+                low + (high - low) / 2
 
             val testDate =
                 addDays(
@@ -583,7 +613,7 @@ class MainActivity : Activity() {
             val totalUsed =
                 mid +
                         monthlyDeduction +
-                        extraDeductionDays
+                        effectiveExtraDeductionDays
 
             if (totalUsed >= baseServiceDays) {
                 high = mid
@@ -592,23 +622,53 @@ class MainActivity : Activity() {
             }
         }
 
-        val actualServiceDays = low
+        /*
+         * ضامن نهایی:
+         * offset نهایی هرگز از بازه ۲۱ ماه خارج نمی‌شود.
+         */
+        val actualServiceDays =
+            low.coerceIn(
+                0,
+                baseServiceDays
+            )
 
-        val finishDate =
+        /*
+         * تاریخ پایان را محاسبه می‌کنیم و دوباره با
+         * baseFinish مقایسه می‌کنیم تا حتی در صورت تغییر
+         * آینده در الگوریتم هم از سقف عبور نکند.
+         */
+        val calculatedFinishDate =
             addDays(
                 start,
                 actualServiceDays
             )
 
+        val finishDate =
+            if (calculatedFinishDate.after(baseFinish)) {
+                baseFinish
+            } else {
+                calculatedFinishDate
+            }
+
+        /*
+         * کسری واقعی مربوط به مدت سپری‌شده.
+         */
         val serviceDeductionDays =
             calculateMonthlyDeduction(
                 start,
                 finishDate
             )
 
+        /*
+         * مجموع کسری را بیشتر از کل مدت پایه گزارش نمی‌کنیم.
+         */
         val totalDeductionDays =
-            serviceDeductionDays +
-                    extraDeductionDays
+            (
+                serviceDeductionDays +
+                        effectiveExtraDeductionDays
+                ).coerceAtMost(
+                    baseServiceDays.toDouble()
+                )
 
         val serviceType =
             if (deductionDaysPerMonth == 5) {
@@ -624,7 +684,7 @@ class MainActivity : Activity() {
             baseServiceDays = baseServiceDays,
             extraMonths = extraMonths,
             extraDays = extraDays,
-            extraDeductionDays = extraDeductionDays,
+            extraDeductionDays = effectiveExtraDeductionDays,
             actualServiceDays = actualServiceDays,
             serviceDeductionDays = serviceDeductionDays,
             totalDeductionDays = totalDeductionDays,
